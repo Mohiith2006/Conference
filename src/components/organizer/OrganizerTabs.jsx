@@ -834,7 +834,7 @@ export const OrganizerTabs = ({ activeTab, setActiveTab }) => {
       )}
 
       {/* ----------------------------------------------------------------- */}
-      {/* TAB: 5. PROGRAM SCHEDULING & CONFLICT DETECTION                   */}
+      {/* TAB: PROGRAM SCHEDULING & CONFLICT DETECTION                   */}
       {/* ----------------------------------------------------------------- */}
       {activeTab === "scheduling" && (
         <OrganizerScheduling

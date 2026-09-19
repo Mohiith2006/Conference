@@ -331,7 +331,7 @@ export const OrganizerScheduling = ({ conferences = [], papers = [], onAssignSch
         <div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono tracking-widest uppercase text-ink-500 font-bold">
-              Organizer Executive Portal • Section 5
+              Organizer Executive Portal • Program Scheduling
             </span>
             <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-beige-100 text-ink-700 border border-beige-300">
               Program Committee
@@ -947,3 +947,4 @@ export const OrganizerScheduling = ({ conferences = [], papers = [], onAssignSch
     </div>
   );
 };
+
