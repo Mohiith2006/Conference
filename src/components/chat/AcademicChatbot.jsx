@@ -1,7 +1,133 @@
 import React, { useState, useRef, useEffect } from "react";
-import { MessageSquare, X, Send } from "lucide-react";
-import { askGeminiAssistant, isGeminiConfigured } from "../../services/geminiService";
+import {
+  MessageSquare,
+  X,
+  Send,
+  Key,
+  RotateCcw,
+  Sparkles,
+  Check,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
+import {
+  askGeminiAssistant,
+  isGeminiConfigured,
+  getGeminiApiKey,
+  setGeminiApiKey
+} from "../../services/geminiService";
 import { useAuth } from "../../context/useAuth";
+
+// Quick suggestion chips for scholars
+const QUICK_PROMPTS = [
+  { label: "Active Conferences", query: "What are the active conferences?" },
+  { label: "My Submissions", query: "What is my paper status?" },
+  { label: "Presentation Schedule", query: "What is my presentation schedule?" },
+  { label: "Review Rubric", query: "What is the peer review rubric and scoring?" },
+  { label: "Formatting Rules", query: "What are the manuscript formatting guidelines?" },
+  { label: "Registration Fees", query: "What are the conference registration fees?" },
+  { label: "Conflict Detection", query: "How does conflict detection work in scheduling?" },
+  { label: "Certificates", query: "How can I download my certificate?" }
+];
+
+/**
+ * Lightweight academic markdown renderer for chat bubbles.
+ * Formats headings, bold text, code spans, bullet lists, and paragraphs cleanly.
+ */
+const FormattedMessage = ({ text, isUser }) => {
+  if (isUser) {
+    return <div className="font-sans text-xs leading-relaxed">{text}</div>;
+  }
+
+  const renderInline = (str) => {
+    // Split on bold (**text**), code (`text`), and italic (*text*)
+    const parts = str.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("**") && part.endsWith("**")) {
+        return (
+          <strong key={i} className="font-semibold text-ink-950">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith("`") && part.endsWith("`")) {
+        return (
+          <code
+            key={i}
+            className="px-1 py-0.5 rounded bg-beige-200 text-ink-900 font-mono text-[11px] font-medium"
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      if (part.startsWith("*") && part.endsWith("*")) {
+        return (
+          <em key={i} className="italic text-ink-700">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+      return part;
+    });
+  };
+
+  const lines = text.split("\n");
+
+  return (
+    <div className="font-sans text-xs leading-relaxed space-y-1.5 text-ink-900">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) {
+          return <div key={idx} className="h-1" />;
+        }
+
+        // Heading 3
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4
+              key={idx}
+              className="font-serif font-bold text-ink-950 text-xs pt-1 pb-0.5 border-b border-beige-200"
+            >
+              {renderInline(trimmed.slice(4))}
+            </h4>
+          );
+        }
+
+        // Bullet point
+        if (trimmed.startsWith("• ") || trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          const content = trimmed.replace(/^[•\-\*]\s+/, "");
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-1">
+              <span className="text-terracotta-600 font-bold shrink-0 mt-0.5">•</span>
+              <span className="flex-1">{renderInline(content)}</span>
+            </div>
+          );
+        }
+
+        // Numbered list
+        const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
+        if (numMatch) {
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-1">
+              <span className="font-mono text-[10px] font-bold text-ink-600 shrink-0 mt-0.5">
+                {numMatch[1]}.
+              </span>
+              <span className="flex-1">{renderInline(numMatch[2])}</span>
+            </div>
+          );
+        }
+
+        // Regular paragraph
+        return (
+          <p key={idx} className="text-ink-800">
+            {renderInline(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
 
 export const AcademicChatbot = () => {
   const { currentUser, userProfile } = useAuth();
@@ -10,14 +136,27 @@ export const AcademicChatbot = () => {
     {
       id: "welcome",
       sender: "ai",
-      text: isGeminiConfigured
-        ? "Greetings. I am your ConfHub Academic Advisor. Inquire about active conferences, submission deadlines, paper statuses, or your schedule."
-        : "Greetings. I am your ConfHub Academic Advisor, running in rule-based mode (no Gemini API key configured, so open-ended questions use built-in answers instead of the LLM). I can still help with active conferences, submission deadlines, paper statuses, camera-ready/registration, certificates, and your schedule.",
+      text: `Greetings! I am your **ConfHub Academic Advisor**.
+
+I can answer any questions regarding:
+• **Active Conferences & Deadlines**
+• **Manuscript Submissions & Formatting** (IEEE/ACM 10-page 2-column)
+• **Real-Time Paper Statuses & Reviews**
+• **Peer-Review Rubric & Scoring**
+• **Registration Fees & Finalizing**
+• **Program Timetable & Conflict Detection**
+• **Official Presentation Certificates**
+
+What would you like to inquire about today?`,
       timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(getGeminiApiKey());
+  const [keySavedMessage, setKeySavedMessage] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(isGeminiConfigured());
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -28,13 +167,39 @@ export const AcademicChatbot = () => {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, loading]);
 
-  const handleSendMessage = async (e) => {
+  const handleSaveApiKey = (e) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    setGeminiApiKey(apiKeyInput.trim());
+    setHasApiKey(isGeminiConfigured());
+    setKeySavedMessage(true);
+    setTimeout(() => setKeySavedMessage(false), 2500);
+  };
 
-    const userText = input.trim();
+  const handleClearApiKey = () => {
+    setGeminiApiKey("");
+    setApiKeyInput("");
+    setHasApiKey(false);
+    setKeySavedMessage(true);
+    setTimeout(() => setKeySavedMessage(false), 2500);
+  };
+
+  const handleClearChat = () => {
+    setMessages([
+      {
+        id: `welcome-${Date.now()}`,
+        sender: "ai",
+        text: `Conversation restarted. I am ready to assist you with any conference, submission, review, or scheduling questions.`,
+        timestamp: new Date()
+      }
+    ]);
+  };
+
+  const executeInquiry = async (textToSend) => {
+    const userText = textToSend.trim();
+    if (!userText || loading) return;
+
     const userMsg = {
       id: `msg-${Date.now()}`,
       sender: "user",
@@ -42,14 +207,18 @@ export const AcademicChatbot = () => {
       timestamp: new Date()
     };
 
-    // Append user's actual typed message
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
     try {
-      // Dynamic live Firestore queries based on actual user text
-      const aiReply = await askGeminiAssistant(userText, currentUser, userProfile, messages);
+      const aiReply = await askGeminiAssistant(
+        userText,
+        currentUser,
+        userProfile,
+        messages
+      );
+
       setMessages((prev) => [
         ...prev,
         {
@@ -61,12 +230,13 @@ export const AcademicChatbot = () => {
       ]);
     } catch (err) {
       console.error("Chatbot processing error:", err);
+      // Fallback guarantees answer is always provided
       setMessages((prev) => [
         ...prev,
         {
-          id: `err-${Date.now()}`,
+          id: `reply-fallback-${Date.now()}`,
           sender: "ai",
-          text: "I don't have that information right now. Try asking about 'active conferences' or 'my submissions'.",
+          text: "I am your ConfHub Advisor. You can check active conferences in Tab 1, track your papers in Tab 2, complete registration in Tab 3, view your presentation schedule in Tab 4, and download certificates in Tab 5.",
           timestamp: new Date()
         }
       ]);
@@ -75,114 +245,226 @@ export const AcademicChatbot = () => {
     }
   };
 
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    executeInquiry(input);
+  };
+
   return (
     <>
       {/* ========================================================= */}
-      {/* FLOATING ACTION BUTTON (FAB) - FIXED BOTTOM-6 RIGHT-6 */}
+      {/* FLOATING ACTION BUTTON (FAB) */}
       {/* ========================================================= */}
       <div className="fixed bottom-6 right-6 z-[60]">
         {!isOpen ? (
           <button
             onClick={() => setIsOpen(true)}
             aria-label="Open AI Academic Assistant"
-            className="w-12 h-12 bg-ink-900 hover:bg-ink-800 text-beige-50 border border-beige-300 rounded-sm shadow-md transition-all flex items-center justify-center group active:scale-95"
-            title="Ask ConfHub AI Academic Assistant"
+            className="w-12 h-12 bg-ink-900 hover:bg-ink-800 text-beige-50 border border-beige-300 rounded-sm shadow-xl transition-all flex items-center justify-center group active:scale-95"
+            title="Ask ConfHub AI Academic Advisor"
           >
             <MessageSquare className="w-5 h-5 text-beige-100 group-hover:scale-110 transition-transform" />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-terracotta-600 rounded-full border border-white"></span>
           </button>
         ) : (
           /* ========================================================= */
-          /* CHAT WINDOW POPUP (Approx 350px by 450px)                 */
-          /* Monochromatic Beige Academic Styling                     */
+          /* CHAT WINDOW POPUP */
+          /* Monochromatic Beige Academic Styling (380px x 520px)      */
           /* ========================================================= */
-          <div className="w-[350px] h-[460px] bg-[#FAF9F6] border border-beige-300 rounded-sm shadow-xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200">
-            
+          <div className="w-[370px] sm:w-[410px] h-[540px] bg-[#FAF9F6] border border-beige-300 rounded-sm shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-3 duration-200">
             {/* Header */}
             <div className="p-3 bg-beige-100 border-b border-beige-300 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-sm border border-ink-900 bg-white flex items-center justify-center font-serif text-[10px] font-bold text-ink-900">
+                <div className="w-7 h-7 rounded-sm border border-ink-900 bg-white flex items-center justify-center font-serif text-xs font-bold text-ink-900 shadow-2xs">
                   🏛
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-xs text-ink-900 tracking-wide">
+                  <h3 className="font-serif font-bold text-xs text-ink-950 tracking-wide flex items-center gap-1.5">
                     ConfHub Academic Advisor
+                    <Sparkles className="w-3 h-3 text-terracotta-600" />
                   </h3>
-                  <p className="text-[9px] font-mono text-ink-500 uppercase">
-                    {isGeminiConfigured ? "Gemini AI Powered" : "Rule-Based Mode"}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${
+                        hasApiKey ? "bg-emerald-600" : "bg-ink-600"
+                      }`}
+                    />
+                    <p className="text-[9px] font-mono text-ink-600 uppercase tracking-tight">
+                      {hasApiKey ? "Gemini 1.5/2.0 Flash Connected" : "Academic Intelligence Engine"}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsOpen(false)}
-                className="text-ink-500 hover:text-ink-900 p-1 rounded-sm transition"
-                title="Close chat"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className={`p-1.5 rounded-sm transition ${
+                    showSettings
+                      ? "bg-beige-300 text-ink-900"
+                      : "text-ink-600 hover:text-ink-900 hover:bg-beige-200"
+                  }`}
+                  title="Configure Gemini API Key"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  onClick={handleClearChat}
+                  className="p-1.5 text-ink-600 hover:text-ink-900 hover:bg-beige-200 rounded-sm transition"
+                  title="Restart Conversation"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="p-1.5 text-ink-600 hover:text-ink-900 hover:bg-beige-200 rounded-sm transition"
+                  title="Close Assistant"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Scrollable Message Area */}
-            <div className="flex-1 p-3.5 overflow-y-auto space-y-3 text-xs bg-[#FAF9F6]">
+            {/* Slide-Down API Key Configuration Drawer */}
+            {showSettings && (
+              <div className="bg-beige-100/95 border-b border-beige-300 p-3 text-xs space-y-2.5 animate-in slide-in-from-top-2 duration-150 shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="font-serif font-bold text-ink-900 text-xs flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-terracotta-600" />
+                    Gemini API Key (Optional)
+                  </div>
+                  <a
+                    href="https://aistudio.google.com/app/apikey"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[10px] text-terracotta-700 hover:underline flex items-center gap-0.5 font-mono"
+                  >
+                    Get Free Key <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+
+                <p className="text-[10px] text-ink-600 leading-normal">
+                  ConfHub includes a comprehensive built-in Academic Reasoning Engine that answers all conference, review, rubric, and scheduling questions. You may optionally connect your Google Gemini API key for open-ended LLM capabilities.
+                </p>
+
+                <form onSubmit={handleSaveApiKey} className="flex gap-1.5">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="flex-1 px-2 py-1 text-xs bg-white border border-beige-300 rounded-sm font-mono text-ink-900 focus:outline-none focus:border-ink-800"
+                  />
+                  <button
+                    type="submit"
+                    className="px-2.5 py-1 bg-ink-900 hover:bg-ink-800 text-beige-50 text-xs rounded-sm font-medium transition"
+                  >
+                    Save
+                  </button>
+                  {apiKeyInput && (
+                    <button
+                      type="button"
+                      onClick={handleClearApiKey}
+                      className="px-2 py-1 bg-beige-200 hover:bg-beige-300 text-ink-700 text-xs rounded-sm transition"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </form>
+
+                {keySavedMessage && (
+                  <div className="text-[10px] text-emerald-700 font-medium flex items-center gap-1">
+                    <Check className="w-3 h-3" /> Key settings updated successfully!
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Scrollable Messages Viewport */}
+            <div className="flex-1 p-3.5 overflow-y-auto space-y-3 bg-[#FAF9F6]">
               {messages.map((m) => (
                 <div
                   key={m.id}
-                  className={`flex gap-2 ${m.sender === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex gap-2 ${
+                    m.sender === "user" ? "justify-end" : "justify-start"
+                  }`}
                 >
                   {m.sender === "ai" && (
-                    <div className="w-5 h-5 rounded-sm border border-beige-300 bg-beige-100 text-ink-800 flex items-center justify-center text-[10px] font-serif font-bold shrink-0 mt-0.5">
-                      AI
+                    <div className="w-6 h-6 rounded-sm border border-beige-300 bg-beige-100 text-ink-800 flex items-center justify-center text-[10px] font-serif font-bold shrink-0 mt-0.5 shadow-2xs">
+                      🏛
                     </div>
                   )}
 
                   <div
-                    className={`p-2.5 max-w-[85%] rounded-sm text-xs leading-relaxed ${
+                    className={`p-3 max-w-[88%] rounded-sm shadow-2xs ${
                       m.sender === "user"
-                        ? "bg-ink-900 text-beige-50 font-sans shadow-2xs"
-                        : "bg-white border border-beige-200 text-ink-800 font-sans shadow-2xs"
+                        ? "bg-ink-900 text-beige-50"
+                        : "bg-white border border-beige-200"
                     }`}
                   >
-                    {m.text}
+                    <FormattedMessage text={m.text} isUser={m.sender === "user"} />
                   </div>
                 </div>
               ))}
 
+              {/* Loading Indicator */}
               {loading && (
-                <div className="flex gap-2 justify-start">
-                  <div className="w-5 h-5 rounded-sm border border-beige-300 bg-beige-100 text-ink-800 flex items-center justify-center text-[10px] font-serif font-bold shrink-0">
-                    AI
+                <div className="flex gap-2 justify-start items-center">
+                  <div className="w-6 h-6 rounded-sm border border-beige-300 bg-beige-100 text-ink-800 flex items-center justify-center text-[10px] font-serif font-bold shrink-0 shadow-2xs">
+                    🏛
                   </div>
-                  <div className="p-2.5 bg-white border border-beige-200 text-ink-500 rounded-sm text-xs italic flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-ink-400 animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-ink-400 animate-bounce delay-100"></span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-ink-400 animate-bounce delay-200"></span>
-                    <span className="text-[10px] ml-1">Consulting conference rules...</span>
+                  <div className="p-3 bg-white border border-beige-200 text-ink-600 rounded-sm text-xs italic flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-ink-600 animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-ink-600 animate-bounce delay-100"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-ink-600 animate-bounce delay-200"></span>
+                    <span className="text-[11px] font-sans">
+                      Analyzing academic guidelines & records...
+                    </span>
                   </div>
                 </div>
               )}
+
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Bottom Input Field */}
-            <form onSubmit={handleSendMessage} className="p-2.5 bg-beige-100 border-t border-beige-300 flex items-center gap-2 shrink-0">
+            {/* Quick Suggestion Chips */}
+            <div className="px-3 py-2 bg-beige-50/80 border-t border-beige-200 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+              {QUICK_PROMPTS.map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => executeInquiry(chip.query)}
+                  disabled={loading}
+                  className="whitespace-nowrap px-2.5 py-1 text-[10px] font-sans font-medium bg-white hover:bg-beige-100 text-ink-800 border border-beige-300 rounded-full shadow-2xs transition active:scale-95 disabled:opacity-50"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Bottom Input Area */}
+            <form
+              onSubmit={handleFormSubmit}
+              className="p-2.5 bg-beige-100 border-t border-beige-300 flex items-center gap-2 shrink-0"
+            >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about deadlines, camera-ready, certs..."
-                className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-beige-300 rounded-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-ink-800"
+                placeholder="Ask about conferences, reviews, guidelines, schedules..."
+                className="flex-1 px-3 py-2 text-xs bg-white border border-beige-300 rounded-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-ink-800"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || loading}
-                className="p-1.5 bg-ink-900 hover:bg-ink-800 text-beige-50 rounded-sm disabled:opacity-40 transition"
+                className="p-2 bg-ink-900 hover:bg-ink-800 text-beige-50 rounded-sm disabled:opacity-40 transition shadow-2xs"
                 title="Send inquiry"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>
-
           </div>
         )}
       </div>

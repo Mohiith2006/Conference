@@ -39,7 +39,7 @@ const dispatchReviewsChanged = (reviews) => {
   } catch {}
 };
 
-const getStoredConferences = () => {
+export const getStoredConferences = () => {
   try {
     const saved = localStorage.getItem("confhub_conferences");
     if (!saved) return INITIAL_CONFERENCES;
@@ -169,7 +169,7 @@ export const mergeWithLocalReviews = (firestoreDocs) => {
   return merged;
 };
 
-const getStoredUsers = () => {
+export const getStoredUsers = () => {
   try {
     const saved = localStorage.getItem("confhub_users");
     return saved ? JSON.parse(saved) : INITIAL_USERS;
