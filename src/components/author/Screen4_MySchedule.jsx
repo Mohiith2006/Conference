@@ -19,9 +19,9 @@ export const Screen4_MySchedule = () => {
   const { papers, conferences } = useConference();
   const { currentUser } = useAuth();
 
-  // Papers by author that have been finalized or have a schedule populated
+  // Papers by author that have been scheduled
   const scheduledPapers = papers.filter(
-    (p) => p.author_id === currentUser?.uid && (p.status === "finalized" || p.schedule)
+    (p) => p.author_id === currentUser?.uid && Boolean(p.schedule)
   );
 
   const getConference = (confId) => {

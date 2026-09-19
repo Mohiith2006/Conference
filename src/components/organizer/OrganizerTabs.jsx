@@ -14,6 +14,7 @@ import {
   updateUserRole
 } from "../../services/firebaseService";
 import { useAuth } from "../../context/useAuth";
+import { OrganizerScheduling } from "./OrganizerScheduling";
 import {
   Building2,
   Plus,
@@ -22,7 +23,8 @@ import {
   Trash2,
   AlertCircle,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  CalendarDays
 } from "lucide-react";
 
 // Helper for formatting default values for HTML datetime-local inputs
@@ -49,7 +51,7 @@ const parseISOSafely = (val, fallbackDays = 30) => {
   return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
 };
 
-export const OrganizerTabs = ({ activeTab }) => {
+export const OrganizerTabs = ({ activeTab, setActiveTab }) => {
   const { userProfile } = useAuth();
 
   const [conferences, setConferences] = useState([]);
@@ -58,6 +60,14 @@ export const OrganizerTabs = ({ activeTab }) => {
   const [reviewers, setReviewers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [roleUpdatingUid, setRoleUpdatingUid] = useState(null);
+
+  const handleAssignScheduleFromModule = async (paperId, scheduleData) => {
+    // Optimistic UI update
+    setPapers((prev) =>
+      prev.map((p) => (p.id === paperId ? { ...p, schedule: scheduleData } : p))
+    );
+    await assignSchedule(paperId, scheduleData);
+  };
 
   // Real-time Firestore Subscriptions
   useEffect(() => {
@@ -660,16 +670,21 @@ export const OrganizerTabs = ({ activeTab }) => {
                           {(paper.status === "accepted" || paper.status === "finalized") && (
                             <button
                               onClick={() => {
-                                setSchedulingPaper(paper);
-                                if (paper.schedule) {
-                                  setSchedRoom(paper.schedule.room || "");
-                                  setSchedTime(paper.schedule.time || "");
-                                  setSchedDate(paper.schedule.date || "");
-                                  setSchedChair(paper.schedule.chair || "");
+                                if (setActiveTab) {
+                                  setActiveTab("scheduling");
+                                } else {
+                                  setSchedulingPaper(paper);
+                                  if (paper.schedule) {
+                                    setSchedRoom(paper.schedule.room || "");
+                                    setSchedTime(paper.schedule.time || "");
+                                    setSchedDate(paper.schedule.date || "");
+                                    setSchedChair(paper.schedule.chair || "");
+                                  }
                                 }
                               }}
-                              className="px-2.5 py-1 text-xs font-serif border border-ink-900 text-ink-900 hover:bg-beige-100 rounded-sm"
+                              className="px-2.5 py-1 text-xs font-serif font-bold border border-ink-900 text-ink-900 hover:bg-beige-100 rounded-sm inline-flex items-center gap-1 shadow-2xs"
                             >
+                              <CalendarDays className="w-3 h-3" />
                               Schedule
                             </button>
                           )}
@@ -816,6 +831,17 @@ export const OrganizerTabs = ({ activeTab }) => {
           )}
 
         </div>
+      )}
+
+      {/* ----------------------------------------------------------------- */}
+      {/* TAB: 5. PROGRAM SCHEDULING & CONFLICT DETECTION                   */}
+      {/* ----------------------------------------------------------------- */}
+      {activeTab === "scheduling" && (
+        <OrganizerScheduling
+          conferences={conferences}
+          papers={papers}
+          onAssignSchedule={handleAssignScheduleFromModule}
+        />
       )}
 
       {/* ----------------------------------------------------------------- */}

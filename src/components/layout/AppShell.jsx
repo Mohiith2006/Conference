@@ -26,6 +26,7 @@ export const AppShell = ({ activeTab, setActiveTab, children }) => {
       return [
         { id: "conferences", label: "Conferences Management", icon: Building2, sub: "Create events & publish" },
         { id: "decisions", label: "Final Decision Dashboard", icon: Award, sub: "Best paper reviews & decisions" },
+        { id: "scheduling", label: "5. Program Scheduling", icon: CalendarDays, sub: "Build sessions & detect conflicts" },
         { id: "users", label: "User Management", icon: Users, sub: "Promote authors to Reviewer/Organizer" },
       ];
     }

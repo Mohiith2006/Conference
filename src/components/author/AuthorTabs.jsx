@@ -347,7 +347,9 @@ export const AuthorTabs = ({ activeTab, setActiveTab }) => {
   // =========================================================================
   // TAB 4: MY SCHEDULE
   // =========================================================================
-  const finalizedPapers = papers.filter((p) => p.status === "finalized" && p.schedule);
+  const finalizedPapers = papers.filter(
+    (p) => (p.status === "finalized" || p.status === "accepted") && Boolean(p.schedule)
+  );
 
   // =========================================================================
   // TAB 5: CERTIFICATES & DOCUMENTS

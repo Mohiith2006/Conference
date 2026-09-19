@@ -8,7 +8,7 @@ import { OrganizerTabs } from "./components/organizer/OrganizerTabs";
 import { ReviewerTabs } from "./components/reviewer/ReviewerTabs";
 
 const TABS_BY_ROLE = {
-  organizer: ["conferences", "decisions", "users"],
+  organizer: ["conferences", "decisions", "scheduling", "users"],
   reviewer: ["assigned", "history"],
   author: ["overview", "submit", "submissions", "registration", "schedule", "certificates"],
 };
@@ -48,7 +48,7 @@ const PortalRouter = () => {
   return (
     <AppShell activeTab={activeTab} setActiveTab={setActiveTab}>
       {role === "organizer" ? (
-        <OrganizerTabs activeTab={activeTab} />
+        <OrganizerTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       ) : role === "reviewer" ? (
         <ReviewerTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       ) : (
