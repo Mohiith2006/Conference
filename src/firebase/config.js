@@ -21,13 +21,13 @@ const getFirebaseConfig = () => {
   }
 
   return {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBXZycchrJyUpC-CcK3ywEgkZNyqGACuNw",
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "conference-fc3c4.firebaseapp.com",
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "conference-fc3c4",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "conference-fc3c4.firebasestorage.app",
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "391549987700",
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:391549987700:web:521bd0de0a294d26841a21",
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-B8R3Z503EL",
+    apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyBXZycchrJyUpC-CcK3ywEgkZNyqGACuNw",
+    authDomain: import.meta.env?.VITE_FIREBASE_AUTH_DOMAIN || "conference-fc3c4.firebaseapp.com",
+    projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "conference-fc3c4",
+    storageBucket: import.meta.env?.VITE_FIREBASE_STORAGE_BUCKET || "conference-fc3c4.firebasestorage.app",
+    messagingSenderId: import.meta.env?.VITE_FIREBASE_MESSAGING_SENDER_ID || "391549987700",
+    appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:391549987700:web:521bd0de0a294d26841a21",
+    measurementId: import.meta.env?.VITE_FIREBASE_MEASUREMENT_ID || "G-B8R3Z503EL",
   };
 };
 
@@ -48,7 +48,7 @@ let analytics = null;
 // Suite (`firebase emulators:start`) instead of the real cloud project, so
 // auth/database/storage work can be tested and iterated on without touching
 // live data. Off by default; only active when explicitly enabled.
-const useEmulators = import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true";
+const useEmulators = import.meta.env?.VITE_USE_FIREBASE_EMULATORS === "true";
 
 if (isFirebaseConfigured) {
   try {

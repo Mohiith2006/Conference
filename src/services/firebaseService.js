@@ -12,14 +12,14 @@ import {
   onSnapshot
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage, auth } from "../firebase/config";
+import { db, storage, auth } from "../firebase/config.js";
 import {
   INITIAL_CONFERENCES,
   INITIAL_PAPERS,
   INITIAL_REVIEWS,
   INITIAL_DOCUMENTS,
   INITIAL_USERS
-} from "../mock/initialData";
+} from "../mock/initialData.js";
 
 const dispatchPapersChanged = (papers) => {
   try {
