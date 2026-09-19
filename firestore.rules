@@ -1,0 +1,139 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    function isAuthorOfPaper(paperData) {
+      return isAuthenticated() && paperData.author_id == request.auth.uid;
+    }
+
+    // 1. Users Collection
+    // CRITICAL: self-service account creation may ONLY ever produce an Author
+    // account - request.resource.data.role == 'author' is enforced here,
+    // independently of whatever the client sends, so a raw/spoofed API call
+    // that tries to create a brand-new doc with role: 'organizer' (or
+    // anything else) is rejected outright, not merely hidden by the signup
+    // UI's removal of the role picker. There is deliberately no isRole
+    // ('organizer') escape hatch on create: an organizer never creates a
+    // user's account for them - they can only promote an EXISTING account via
+    // update (below), which requires that account to already exist as an
+    // author. Once a document exists, its owner may edit their own profile
+    // but may NEVER change their own 'role' field (that would be a
+    // self-service privilege escalation); only an existing organizer may set/
+    // change someone else's role.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if request.auth.uid == userId && request.resource.data.role == 'author';
+      allow update: if (request.auth.uid == userId &&
+                          !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                        || isRole('organizer');
+      allow delete: if isRole('organizer');
+    }
+
+    // 2. Conferences Collection
+    // Published conferences are visible to all authenticated users; drafts only to organizers
+    match /conferences/{confId} {
+      allow read: if isAuthenticated() && (resource.data.status == 'published' || isRole('organizer'));
+      allow create, update, delete: if isRole('organizer');
+    }
+
+    // 3. Papers Collection
+    // STRICT RBAC: Authors can ONLY read and write papers where author_id == request.auth.uid
+    // Organizers have administrative read/update access
+    // Reviewers can only read papers specifically assigned to them
+    match /papers/{paperId} {
+      allow read: if isAuthenticated() && (
+        resource.data.author_id == request.auth.uid ||
+        isRole('organizer') ||
+        (isRole('reviewer') && request.auth.uid in resource.data.assigned_reviewers)
+      );
+      
+      // Authors can only create papers with themselves as author_id
+      allow create: if isAuthenticated() && request.resource.data.author_id == request.auth.uid;
+      
+      // Author updates are only permitted when paper is in editable states ('submitted' or 'accepted' for camera-ready).
+      // The allowed field list must match every field firebaseService.js's
+      // uploadCameraReady/completeRegistration actually write (camera_ready_name
+      // and registration_details included) - any field written but missing here
+      // makes the whole update fail closed, silently blocking finalization.
+      allow update: if isAuthenticated() && (
+        (resource.data.author_id == request.auth.uid && (
+          resource.data.status == 'submitted' ||
+          (resource.data.status == 'accepted' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['camera_ready_url', 'camera_ready_name', 'registration_completed', 'registration_tier', 'registration_details', 'status', 'version', 'updated_at']))
+        )) ||
+        isRole('organizer')
+      );
+      
+      allow delete: if isAuthenticated() && (
+        (resource.data.author_id == request.auth.uid && resource.data.status == 'submitted') ||
+        isRole('organizer')
+      );
+    }
+
+    // 4. Reviews Collection
+    // CRITICAL: Authors CANNOT see reviewer identities.
+    // Authors can only read reviews after final decision (accepted/rejected/finalized),
+    // and only anonymized content is exposed.
+    //
+    // author_id is deliberately NOT set when a reviewer submits a review - it is
+    // added later, only by the organizer, once a final decision is recorded
+    // (see makeFinalDecision in firebaseService.js). That means "this review
+    // has an author_id matching me" and "this review has been released to me"
+    // are the same fact, expressible as one simple equality Firestore can
+    // verify against a query - unlike a compound condition (e.g. a separate
+    // author_id-matches AND released-flag-is-true pair of checks), which
+    // Firestore's list-query validator was unable to prove in testing against
+    // the emulator, even with each field individually guarded by a
+    // `'field' in resource.data` existence check. get()/exists() lookups
+    // against the paper doc have the same list-query limitation (they can
+    // secure a single-document read but not a list/collection query), which is
+    // why this doesn't check paper status directly either.
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated() && (
+        isRole('organizer') ||
+        resource.data.reviewer_id == request.auth.uid ||
+        resource.data.author_id == request.auth.uid
+      );
+
+      // Only reviewers can create/update their own reviews. A reviewer may
+      // never set author_id themselves - only the organizer's release step
+      // (below) may add it, since its presence is what makes a review readable.
+      allow create: if isRole('reviewer') && request.resource.data.reviewer_id == request.auth.uid
+        && !('author_id' in request.resource.data);
+      allow update: if (
+        isRole('reviewer') && request.resource.data.reviewer_id == request.auth.uid &&
+        // A reviewer revising their own evaluation must leave author_id exactly
+        // as it was (present or absent) - they can't release their own review.
+        request.resource.data.author_id == resource.data.author_id
+      ) || (
+        // ...except the one field an organizer sets to release a paper's
+        // reviews to its author once a final decision is recorded.
+        isRole('organizer') && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['author_id'])
+      );
+      allow delete: if isRole('organizer');
+    }
+
+    // 5. Supplementary Documents Collection
+    match /supplementary_documents/{docId} {
+      allow read: if isAuthenticated() && (
+        resource.data.author_id == request.auth.uid || isRole('organizer')
+      );
+      allow create: if isAuthenticated() && request.resource.data.author_id == request.auth.uid;
+      allow update, delete: if isAuthenticated() && (
+        resource.data.author_id == request.auth.uid || isRole('organizer')
+      );
+    }
+  }
+}

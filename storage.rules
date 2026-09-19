@@ -1,0 +1,47 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Cross-service lookup: reads this user's role from Firestore (users/{uid}.role),
+    // set exclusively by firestore.rules (a user can never self-assign 'organizer' there).
+    function isOrganizer() {
+      return isAuthenticated() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'organizer';
+    }
+
+    // Cross-service lookup: true only if this user's uid is in the paper's assigned_reviewers list.
+    function isAssignedReviewer(paperId) {
+      return isAuthenticated() &&
+        request.auth.uid in
+          firestore.get(/databases/(default)/documents/papers/$(paperId)).data.assigned_reviewers;
+    }
+
+    // Initial paper submissions. Path includes the Firestore paper doc ID so this rule
+    // can verify reviewer assignment directly against the papers collection.
+    match /papers/{conferenceId}/{authorId}/{paperId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == authorId || isOrganizer() || isAssignedReviewer(paperId)
+      );
+      allow write: if isAuthenticated() && request.auth.uid == authorId;
+    }
+
+    // Camera ready submissions - same visibility as the original manuscript.
+    match /camera_ready/{conferenceId}/{authorId}/{paperId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == authorId || isOrganizer() || isAssignedReviewer(paperId)
+      );
+      allow write: if isAuthenticated() && request.auth.uid == authorId;
+    }
+
+    // Supplementary & patent documents - matches firestore.rules: author + organizer only,
+    // reviewers are not granted access to these (not part of the reviewed manuscript).
+    match /supplementary/{authorId}/{paperId}/{allPaths=**} {
+      allow read: if isAuthenticated() && (request.auth.uid == authorId || isOrganizer());
+      allow write: if isAuthenticated() && request.auth.uid == authorId;
+    }
+  }
+}
