@@ -2,12 +2,12 @@ import { getStoredConferences, getStoredPapers, getStoredReviews, getStoredUsers
 import { INITIAL_CONFERENCES } from "../mock/initialData.js";
 
 /**
- * ConfHub Academic AI Service
+ * ConfHub General-Purpose AI Assistant Service
  * Dual-Engine Architecture:
  * 1. Live Google Gemini LLM (1.5 Flash / 2.0 Flash) when an API key is provided
- * 2. ConfHub Intelligent Academic Reasoning Engine (Built-in offline/local AI)
- *    Equipped with an extensive academic knowledge base, CS/AI encyclopedia,
- *    acronym dictionary, paper lifecycle data, and platform records.
+ * 2. ConfHub Intelligent Knowledge Engine (Built-in offline/local AI)
+ *    Capable of answering general knowledge, science, coding, and general queries,
+ *    while retaining deep, exact knowledge of the ConfHub Conference Management System.
  */
 
 // =========================================================================
@@ -38,6 +38,179 @@ export const setGeminiApiKey = (key) => {
 
 export const isGeminiConfigured = () => {
   return Boolean(getGeminiApiKey());
+};
+
+// =========================================================================
+// GENERAL KNOWLEDGE: COUNTRY CAPITALS DICTIONARY
+// =========================================================================
+export const COUNTRY_CAPITALS = {
+  france: { capital: "Paris", info: "Paris is also France's largest city and economic center." },
+  germany: { capital: "Berlin", info: "Berlin is known for its history, arts, and vibrant culture." },
+  "united kingdom": { capital: "London", info: "London is a global financial and cultural capital situated on the River Thames." },
+  uk: { capital: "London", info: "London is a global financial and cultural capital situated on the River Thames." },
+  england: { capital: "London", info: "London is located on the River Thames in south-east England." },
+  "united states": { capital: "Washington, D.C.", info: "Washington, D.C. is a federal district along the Potomac River." },
+  usa: { capital: "Washington, D.C.", info: "Washington, D.C. is a federal district along the Potomac River." },
+  us: { capital: "Washington, D.C.", info: "Washington, D.C. is a federal district along the Potomac River." },
+  italy: { capital: "Rome", info: "Rome, known as the Eternal City, is home to the Colosseum and Vatican City." },
+  spain: { capital: "Madrid", info: "Madrid is the center of Spanish culture, politics, and the royal palace." },
+  canada: { capital: "Ottawa", info: "Ottawa is located in Ontario along the border with Quebec." },
+  australia: { capital: "Canberra", info: "Canberra is located in the Australian Capital Territory between Sydney and Melbourne." },
+  japan: { capital: "Tokyo", info: "Tokyo is the world's most populous metropolitan area and Japan's high-tech center." },
+  china: { capital: "Beijing", info: "Beijing is one of the world's oldest cities with a history spanning 3,000 years." },
+  india: { capital: "New Delhi", info: "New Delhi serves as the seat of all three branches of the Government of India." },
+  russia: { capital: "Moscow", info: "Moscow is the northernmost and coldest megacity in Europe, centered around the Kremlin." },
+  brazil: { capital: "Brasília", info: "Brasília is a planned federal capital founded in 1960, famous for Oscar Niemeyer's architecture." },
+  mexico: { capital: "Mexico City", info: "Mexico City is built on the ruins of the ancient Aztec capital Tenochtitlan." },
+  switzerland: { capital: "Bern", info: "Bern serves as the federal city and de facto capital of Switzerland." },
+  netherlands: { capital: "Amsterdam", info: "Amsterdam is the constitutional capital, while the government sits in The Hague." },
+  belgium: { capital: "Brussels", info: "Brussels is also the de facto capital of the European Union." },
+  sweden: { capital: "Stockholm", info: "Stockholm is built across 14 islands where Lake Mälaren meets the Baltic Sea." },
+  norway: { capital: "Oslo", info: "Oslo is known for its maritime heritage, green spaces, and museums." },
+  denmark: { capital: "Copenhagen", info: "Copenhagen is famous for its colorful Nyhavn harbor and cycling culture." },
+  finland: { capital: "Helsinki", info: "Helsinki is Finland's southern capital on the Gulf of Finland." },
+  greece: { capital: "Athens", info: "Athens is the birthplace of democracy and Western philosophy, dominated by the Acropolis." },
+  portugal: { capital: "Lisbon", info: "Lisbon is one of Western Europe's oldest cities, famous for its coastal hills." },
+  austria: { capital: "Vienna", info: "Vienna is renowned for its imperial palaces, classical music legacy, and coffee houses." },
+  poland: { capital: "Warsaw", info: "Warsaw is situated along the Vistula River with a meticulously reconstructed historic Old Town." },
+  ireland: { capital: "Dublin", info: "Dublin is situated at the mouth of the River Liffey and renowned for its literary heritage." },
+  "south korea": { capital: "Seoul", info: "Seoul is a dynamic metropolis blending high-tech innovation with ancient palaces." },
+  korea: { capital: "Seoul", info: "Seoul is the capital of South Korea." },
+  egypt: { capital: "Cairo", info: "Cairo is the largest city in the Arab world, set along the banks of the Nile near the Giza Pyramids." },
+  "south africa": { capital: "Pretoria (Administrative), Cape Town (Legislative), Bloemfontein (Judicial)", info: "South Africa is unique with three official national capitals." },
+  argentina: { capital: "Buenos Aires", info: "Buenos Aires is known as the Paris of South America for its European-style architecture." },
+  turkey: { capital: "Ankara", info: "Ankara became the capital of the Turkish Republic in 1923, succeeding Istanbul." },
+  "saudi arabia": { capital: "Riyadh", info: "Riyadh is Saudi Arabia's capital and main financial hub on a desert plateau." },
+  uae: { capital: "Abu Dhabi", info: "Abu Dhabi is the federal capital and largest of the seven United Arab Emirates." },
+  "united arab emirates": { capital: "Abu Dhabi", info: "Abu Dhabi is the federal capital and largest of the seven United Arab Emirates." },
+  singapore: { capital: "Singapore", info: "Singapore is a sovereign island city-state and global financial hub." },
+  indonesia: { capital: "Jakarta (Nusantara currently developing)", info: "Jakarta is Indonesia's historic capital on the island of Java." },
+  thailand: { capital: "Bangkok", info: "Bangkok, known locally as Krung Thep Maha Nakhon, is famous for ornate shrines and street life." },
+  malaysia: { capital: "Kuala Lumpur", info: "Kuala Lumpur is Malaysia's capital, known for the landmark Petronas Twin Towers." },
+  vietnam: { capital: "Hanoi", info: "Hanoi is renowned for its centuries-old architecture and rich Southeast Asian culture." },
+  "new zealand": { capital: "Wellington", info: "Wellington is the world's southernmost national capital." }
+};
+
+// =========================================================================
+// GENERAL SCIENCE & COMMON TOPICS
+// =========================================================================
+export const GENERAL_TOPICS = [
+  {
+    keywords: ["photosynthesis", "explain photosynthesis", "process of photosynthesis"],
+    title: "Photosynthesis Explained",
+    content: `### 🌿 Photosynthesis Explained
+
+**Photosynthesis** is the biological process through which green plants, algae, and certain bacteria transform light energy into chemical energy stored in sugar molecules (glucose).
+
+### 🧪 Chemical Equation
+$$6\\text{CO}_2 + 6\\text{H}_2\\text{O} + \\text{Light Energy} \\xrightarrow{\\text{Chlorophyll}} \\text{C}_6\\text{H}_{12}\\text{O}_6 + 6\\text{O}_2$$
+
+### 🔬 The Two Sequential Stages:
+1. **Light-Dependent Reactions** *(occur in thylakoid membranes within chloroplasts)*:
+   - Chlorophyll absorbs photons from sunlight.
+   - Water ($\\text{H}_2\\text{O}$) is split via photolysis, generating electrons and releasing oxygen ($\\text{O}_2$) as a vital byproduct.
+   - Converts light energy into high-energy chemical carriers: **ATP** and **NADPH**.
+
+2. **Light-Independent Reactions (Calvin Cycle)** *(occur in the stroma)*:
+   - Uses ATP and NADPH to fix carbon dioxide ($\\text{CO}_2$) from the atmosphere.
+   - Synthesizes glucose ($\\text{C}_6\\text{H}_{12}\\text{O}_6$) and carbohydrates to fuel plant metabolism and growth.
+
+**Ecological Importance**: Photosynthesis provides the primary energy source for almost all ecosystems and produces virtually all the breathable oxygen in Earth's atmosphere.`
+  },
+  {
+    keywords: ["speed of light", "what is the speed of light", "how fast is light"],
+    title: "The Speed of Light",
+    content: `The speed of light in a vacuum is exactly:
+
+$$c = 299,792,458 \\text{ meters per second}$$
+
+• Approximately **300,000 km/s** (or **186,282 miles per second**).
+• At this speed, light travels from the Sun to Earth in approximately **8 minutes and 20 seconds**.
+• In Einstein's theory of Special Relativity, $c$ is the universal speed limit for all matter and information.`
+  },
+  {
+    keywords: ["gravity", "what is gravity", "explain gravity"],
+    title: "Gravity Explained",
+    content: `**Gravity** is one of the four fundamental interactions in the universe, pulling masses toward one another.
+
+### 🌌 Classical vs Modern Physics:
+• **Newtonian Gravitation**: Isaac Newton described gravity as an attractive force proportional to masses and inversely proportional to the square of the distance:
+  $$F = G \\frac{m_1 m_2}{r^2}$$
+  *(On Earth, gravitational acceleration is roughly $g \\approx 9.81 \\text{ m/s}^2$)*
+
+• **General Relativity (Einstein)**: Albert Einstein revealed that gravity is not a traditional force, but rather the **curvature of spacetime** created by mass and energy. Objects simply follow straight paths (geodesics) through curved spacetime.`
+  },
+  {
+    keywords: ["dna", "what is dna", "structure of dna"],
+    title: "DNA (Deoxyribonucleic Acid)",
+    content: `**DNA (Deoxyribonucleic Acid)** is the hereditary molecule carrying the genetic blueprint for the growth, development, functioning, and reproduction of all known living organisms and many viruses.
+
+### 🧬 Key Features:
+• **Double Helix**: Discovered by James Watson, Francis Crick, and Rosalind Franklin in 1953.
+• **Nucleotide Bases**:
+  - **Adenine (A)** pairs with **Thymine (T)**
+  - **Cytosine (C)** pairs with **Guanine (G)**
+• **Function**: Encodes the instructions for synthesizing proteins through transcription (DNA $\\to$ mRNA) and translation (mRNA $\\to$ protein).`
+  },
+  {
+    keywords: ["theory of relativity", "relativity", "einstein relativity", "e=mc2"],
+    title: "Einstein's Theory of Relativity",
+    content: `Albert Einstein revolutionized modern physics through two complementary theories of relativity:
+
+1. **Special Relativity (1905)**:
+   - The laws of physics are identical in all inertial reference frames.
+   - The speed of light in a vacuum is constant for all observers.
+   - Introduced mass-energy equivalence: **$E = mc^2$**, proving mass and energy are interchangeable.
+
+2. **General Relativity (1915)**:
+   - Massive objects (stars, planets, black holes) warp the fabric of spacetime.
+   - Gravity is the manifestation of objects moving along the curves of this warped spacetime.`
+  }
+];
+
+// =========================================================================
+// DYNAMIC GENERAL KNOWLEDGE FETCH (Wikipedia REST API)
+// =========================================================================
+export const fetchGeneralKnowledge = async (query) => {
+  try {
+    const clean = query
+      .replace(/^(what is|what are|explain|who is|who was|tell me about|what's the|whats the|where is|how does|define)\s+/i, "")
+      .replace(/[?!.,;:'"()]/g, "")
+      .trim();
+
+    if (!clean || clean.length < 2) return null;
+
+    // 1. Direct page summary lookup
+    const directUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(clean)}`;
+    const directRes = await fetch(directUrl, { headers: { Accept: "application/json" } });
+    if (directRes.ok) {
+      const directData = await directRes.json();
+      if (directData && directData.type !== "disambiguation" && directData.extract && directData.extract.length > 40) {
+        return `### 📖 ${directData.title}\n\n${directData.extract}`;
+      }
+    }
+
+    // 2. Search lookup if direct title did not match
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(clean)}&format=json&origin=*`;
+    const searchRes = await fetch(searchUrl);
+    if (searchRes.ok) {
+      const searchData = await searchRes.json();
+      const topHit = searchData?.query?.search?.[0];
+      if (topHit && topHit.title) {
+        const pageUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topHit.title)}`;
+        const pageRes = await fetch(pageUrl, { headers: { Accept: "application/json" } });
+        if (pageRes.ok) {
+          const pageData = await pageRes.json();
+          if (pageData && pageData.extract && pageData.extract.length > 40) {
+            return `### 📖 ${pageData.title}\n\n${pageData.extract}`;
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Wikipedia general knowledge fallback note:", err.message);
+  }
+  return null;
 };
 
 // =========================================================================
@@ -598,22 +771,26 @@ export const ACADEMIC_CONCEPTS = [
 
 ### 📐 How it is Calculated:
 A scientist has index $h$ if $h$ of their $N_p$ papers have at least $h$ citations each, and the remaining papers have $\\le h$ citations.
-- *Example*: If a researcher has published 10 papers with citation counts:
-  '[45, 30, 22, 15, 8, 5, 2, 1, 0, 0]'
-  Their h-index is **5** (because 5 papers have $\\ge 5$ citations, but not 6 papers with $\\ge 6$).`
+- *Example*: If a researcher has published 10 papers with citation counts: [45, 30, 22, 15, 8, 5, 2, 1, 0, 0], their h-index is **5** (because 5 papers have $\\ge 5$ citations, but not 6 papers with $\\ge 6$).`
   },
   {
-    keywords: ["peer review", "what is peer review", "peer review process"],
+    keywords: ["peer review", "what is peer review", "peer review process", "how does the review process work", "how does review work"],
     title: "The Academic Peer-Review Process",
-    content: `**Peer Review** is the scientific quality control process where experts in the same discipline evaluate a manuscript for novelty, methodological correctness, reproducibility, and significance before publication.
+    content: `**Peer Review** is the scientific quality control process where domain experts evaluate a manuscript for novelty, methodological correctness, reproducibility, and significance before publication.
 
-### 🛡️ Peer Review Models:
-1. **Double-Blind (Used by ConfHub)**:
-   Neither the authors nor the reviewers know each other's identities. This eliminates geographic, institutional, and prestige bias.
-2. **Single-Blind**:
-   Reviewers know the author's identity, but authors do not know who reviewed their paper.
-3. **Open Peer Review**:
-   Both author and reviewer identities are disclosed, and review logs are published.`
+### 🛡️ How the Review Process Works in ConfHub:
+1. **Double-Blind Evaluation**:
+   Reviewers evaluate submissions without knowing the authors' names or affiliations, and authors receive anonymized feedback. This eliminates prestige and institutional bias.
+2. **4-Dimension Standardized Rubric**:
+   Reviewers score submissions from 1 to 5 across:
+   • **Novelty & Originality (1-5)**: Uniqueness of concepts and advancement of state-of-the-art.
+   • **Methodological Rigor (1-5)**: Soundness of proofs, experimental design, and reproducibility.
+   • **Technical Quality (1-5)**: Implementation correctness and validation against baselines.
+   • **Relevance & Impact (1-5)**: Alignment with conference tracks and community impact.
+3. **Decisions & Feedback**:
+   Reviewers provide an overall recommendation (*Strong Accept, Accept, Weak Accept, Borderline, Weak Reject, Strong Reject*), constructive feedback for authors, and confidential remarks to the Program Chair.
+4. **Author Notifications**:
+   Decisions are released in **Tab 2 (My Submissions)**. Accepted authors proceed to **Tab 3** for camera-ready submission and registration.`
   },
   {
     keywords: ["how to publish", "publish a paper", "how to write a research paper"],
@@ -706,17 +883,23 @@ export const fetchGeminiResponse = async (userMessage, contextData = {}, chatHis
   const stringifiedContext =
     typeof contextData === "string" ? contextData : JSON.stringify(contextData, null, 2);
 
-  const systemInstruction = `You are the ConfHub Academic Advisor, the official scholarly assistant for the ConfHub academic conference management and peer-review platform.
-ConfHub has three portals: Author Portal (Submit Paper, My Submissions, Registration & Camera-Ready, My Schedule, Certificates & Documents), Reviewer Portal (Assigned Manuscripts, Review History), and Organizer Portal (Conference Management, Decision Dashboard, Program Scheduling with Conflict Detection, User Management).
+  const systemInstruction = `You are ConfHub's AI assistant. You can help with anything the user asks—general knowledge, science, coding, mathematics, history, creative tasks, and conversation—and you have specific knowledge about this Conference Management System (ConfHub) to answer questions about it accurately.
 
-Platform Live Data Context:
+ConfHub Platform Context & System Details:
+- Portals:
+  • Author Portal: Tab 1 (Submit Paper), Tab 2 (My Submissions), Tab 3 (Registration & Camera-Ready), Tab 4 (My Schedule), Tab 5 (Certificates & Documents).
+  • Reviewer Portal: Assigned Manuscripts, Review History (double-blind 4-dimension scoring rubric: Novelty 1-5, Rigor 1-5, Quality 1-5, Relevance 1-5).
+  • Organizer Portal: Conference Management, Decision Dashboard (Best Paper awards), Program Scheduling (with automated room & speaker conflict detection), User Management.
+- Paper Requirements: IEEE or ACM 2-column PDF format, max 10 pages, double-blind anonymization for review.
+- Registration Tiers: Student ($150), Academic ($300), Industry ($500). Status becomes "Finalized" when both camera-ready PDF and registration payment are completed.
+- Certificates: Unlocked strictly after conference end_date has elapsed (Tab 5).
+- Live Platform Database Records:
 ${stringifiedContext}
 
 Instructions:
-1. Provide accurate, professional, authoritative, and helpful answers.
-2. If asked academic, AI, CS, or general questions, answer them thoroughly and clearly.
-3. If asked about active conferences, deadlines, paper statuses, presentation schedules, or registration, use the real platform context data provided above.
-4. Format responses cleanly using markdown (bold text, bullet points, headers). Keep answers concise and direct.`;
+1. Answer ANY question the user asks helpfully, directly, and comprehensively (general knowledge, facts, science, coding, creative writing, history, etc.). Never refuse or redirect general questions back to conference topics.
+2. When asked about ConfHub, active conferences, deadlines, paper statuses, review rubrics, registration, or timetables, use the real platform context data above to answer with complete accuracy.
+3. Use clean markdown formatting (bold text, bullet points, numbered lists, code blocks).`;
 
   const candidateModels = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-flash-lite-latest"];
 
@@ -753,8 +936,8 @@ Instructions:
         body: JSON.stringify({
           contents,
           generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 500
+            temperature: 0.4,
+            maxOutputTokens: 600
           }
         })
       });
@@ -777,12 +960,11 @@ Instructions:
 };
 
 // =========================================================================
-// BUILT-IN ACADEMIC KNOWLEDGE & REASONING ENGINE
+// BUILT-IN INTELLIGENT KNOWLEDGE & REASONING ENGINE
 // =========================================================================
-export const generateAcademicEngineResponse = (userMessage, currentUser, userProfile) => {
+export const generateAcademicEngineResponse = async (userMessage, currentUser, userProfile) => {
   const trimmed = userMessage ? userMessage.trim() : "";
   const q = trimmed.toLowerCase();
-  // Strip punctuation for keyword matching
   const cleanQ = q.replace(/[?!.,;:'"()]/g, "").trim();
 
   const platformContext = getPlatformContext(currentUser, userProfile);
@@ -802,7 +984,37 @@ export const generateAcademicEngineResponse = (userMessage, currentUser, userPro
   };
 
   // -------------------------------------------------------------------------
-  // A. FULL FORM & ACRONYM RESOLVER (e.g., "what is the full form of ml")
+  // 1. COUNTRY CAPITALS RESOLVER (e.g. "what's the capital of France")
+  // -------------------------------------------------------------------------
+  const capitalMatch = cleanQ.match(/(?:capital of|what is the capital of|whats the capital of|what's the capital of)\s+([a-z\s]+)/i);
+  if (capitalMatch && capitalMatch[1]) {
+    const country = capitalMatch[1].trim().toLowerCase();
+    if (COUNTRY_CAPITALS[country]) {
+      const c = COUNTRY_CAPITALS[country];
+      const countryTitle = country.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      return `The capital of **${countryTitle}** is **${c.capital}**.\n\n${c.info}`;
+    }
+  }
+
+  // Also check if user just asks "capital of X" where country is a key
+  for (const [countryKey, val] of Object.entries(COUNTRY_CAPITALS)) {
+    if (cleanQ.includes(`capital of ${countryKey}`) || cleanQ === `${countryKey} capital`) {
+      const countryTitle = countryKey.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      return `The capital of **${countryTitle}** is **${val.capital}**.\n\n${val.info}`;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 2. GENERAL SCIENCE & KNOWLEDGE TOPICS (e.g. "explain photosynthesis")
+  // -------------------------------------------------------------------------
+  for (const topic of GENERAL_TOPICS) {
+    if (topic.keywords.some((kw) => cleanQ.includes(kw))) {
+      return topic.content;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // 3. FULL FORM & ACRONYM RESOLVER (e.g., "what is the full form of ml")
   // -------------------------------------------------------------------------
   const fullFormMatch = cleanQ.match(
     /(?:what is the full form of|what is full form of|full form of|what does|what do|stand for|stands for|abbreviation of|meaning of)\s+([a-z0-9\-\s]+)/i
@@ -815,7 +1027,6 @@ export const generateAcademicEngineResponse = (userMessage, currentUser, userPro
       .trim()
       .toUpperCase();
   } else {
-    // Check if the query is strictly or predominantly an acronym (e.g. "what is ml", "what is ai", "ml", "nlp")
     const words = cleanQ.split(/\s+/);
     if (words.length <= 4) {
       for (const w of words) {
@@ -861,47 +1072,38 @@ export const generateAcademicEngineResponse = (userMessage, currentUser, userPro
   }
 
   // -------------------------------------------------------------------------
-  // B. ACADEMIC & CS CONCEPT MATCHER
+  // 4. ACADEMIC & CS CONCEPT MATCHER
   // -------------------------------------------------------------------------
   for (const concept of ACADEMIC_CONCEPTS) {
-    const hasMatch = concept.keywords.some((kw) => cleanQ.includes(kw));
-    if (hasMatch) {
+    if (concept.keywords.some((kw) => cleanQ.includes(kw))) {
       return concept.content;
     }
   }
 
   // -------------------------------------------------------------------------
-  // C. GREETINGS & CASUAL CONVERSATION
+  // 5. GREETINGS & CASUAL CONVERSATION (Open Tone)
   // -------------------------------------------------------------------------
   if (/^(hi|hello|hey|greetings|good morning|good afternoon|good evening|yo)\b/i.test(trimmed)) {
     const userName = userProfile?.name || (currentUser ? "Scholar" : "");
     const greeting = userName ? `Hello ${userName}!` : "Hello!";
-    return `${greeting} I am your **ConfHub Academic Advisor**.
+    return `${greeting} I am your **ConfHub AI Assistant**.
 
-I can assist you with:
-• **Academic & Technical Concepts**: Definitions, acronyms (ML, AI, NLP, LLM), research guides
-• **Active Conferences**: Browse events, locations, deadlines, and tracks
-• **Submissions & Guidelines**: Formatting rules (IEEE/ACM), page limits, anonymization
-• **Paper Statuses**: Track your submissions through peer review and decisions
-• **Review Rubric**: 4-dimension scoring, double-blind rules, recommendations
-• **Registration & Fees**: Finalizing accepted papers, fee tiers ($150-$500)
-• **Program Scheduling**: Timetables, room allocations, and conflict detection
-• **Certificates**: Post-conference PDF certificate downloads
+I can help with anything you'd like to ask—general knowledge, science, coding, and academic concepts—as well as guide you through ConfHub's conferences, submissions, reviews, and presentation schedules.
 
-How can I assist your academic work today?`;
+How can I help you today?`;
   }
 
   if (q.includes("thank") || q.includes("thanks") || q === "ok" || q === "cool" || q === "great") {
-    return `You're very welcome! If you have any further questions about your papers, conference schedules, formatting, or peer reviews, feel free to ask anytime.`;
+    return `You're very welcome! If you have any other questions—whether general knowledge, science, coding, or conference-related—feel free to ask anytime.`;
   }
 
   if (q.includes("joke") || q.includes("funny")) {
-    return `Here is an academic joke for you:
+    return `Here is a fun one for you:
 
-*Why do computer scientists confuse Halloween and Christmas?*
-**Because Oct 31 == Dec 25!** 😄
+*Why do programmers prefer dark mode?*
+**Because light attracts bugs!** 🐛😄
 
-Feel free to ask any conference, submission, or AI question whenever you're ready!`;
+Feel free to ask me anything else!`;
   }
 
   if (
@@ -911,17 +1113,21 @@ Feel free to ask any conference, submission, or AI question whenever you're read
     q.includes("help me") ||
     q === "help"
   ) {
-    return `I am the **ConfHub Academic Advisor**, an AI assistant designed to guide authors, reviewers, and conference organizers through every phase of scholarly publishing.
+    return `I am **ConfHub's AI Assistant**.
 
-**What I Can Do:**
-1. 📖 **Definitions & Acronyms**: Ask for full forms or explanations of ML, AI, NLP, LLM, PQC, IEEE, ACM, etc.
-2. 🏛 **Conferences**: Provide details on active conferences, tracks, and submission deadlines.
-3. 📄 **Submissions**: Guide you through submitting manuscripts (Tab 1) or editing revisions (Tab 2).
-4. 🔍 **Status Tracking**: Check real-time statuses of your submitted papers.
-5. ⭐ **Peer Review**: Explain the 4-dimension evaluation rubric and double-blind rules.
-6. 💳 **Registration**: Detail camera-ready requirements and registration tiers ($150 / $300 / $500).
-7. 📅 **Scheduling**: Lookup your presentation timetable or explain conflict-free session planning.
-8. 📜 **Certificates**: Explain presentation certificate generation (Tab 5).`;
+You can ask me anything:
+• **General Knowledge**: Science, geography, world facts, history, math, or coding.
+• **Academic Concepts**: AI, Machine Learning, Deep Learning, NLP, statistics, and research writing.
+• **ConfHub Conference Operations**:
+  - Active conferences, tracks, and submission deadlines.
+  - Manuscript formatting guidelines (IEEE/ACM 10-page 2-column PDF).
+  - Checking personal paper statuses and double-blind peer review scores.
+  - Review rubric details (1–5 scale across Novelty, Rigor, Quality, Relevance).
+  - Registration fee tiers ($150 Student, $300 Academic, $500 Industry) and camera-ready finalizing.
+  - Presentation schedules and automated conflict detection.
+  - Verified PDF presentation certificate downloads.
+
+What's on your mind?`;
   }
 
   if (
@@ -939,7 +1145,7 @@ It streamlines the complete lifecycle of scholarly gatherings:
   }
 
   // -------------------------------------------------------------------------
-  // D. SPECIFIC CONFERENCE INQUIRIES
+  // 6. SPECIFIC CONFERENCE INQUIRIES
   // -------------------------------------------------------------------------
   const matchedConf = publishedConferences.find((c) => {
     const titleLower = c.title.toLowerCase();
@@ -968,7 +1174,7 @@ ${matchedConf.tracks.map((t) => `  - ${t}`).join("\n")}
   }
 
   // -------------------------------------------------------------------------
-  // E. ACTIVE CONFERENCES CATALOG
+  // 7. ACTIVE CONFERENCES CATALOG
   // -------------------------------------------------------------------------
   if (
     q.includes("active conference") ||
@@ -1006,7 +1212,7 @@ ${matchedConf.tracks.map((t) => `  - ${t}`).join("\n")}
   }
 
   // -------------------------------------------------------------------------
-  // F. DEADLINES & IMPORTANT DATES
+  // 8. DEADLINES & IMPORTANT DATES
   // -------------------------------------------------------------------------
   if (
     q.includes("deadline") ||
@@ -1037,7 +1243,7 @@ ${matchedConf.tracks.map((t) => `  - ${t}`).join("\n")}
   }
 
   // -------------------------------------------------------------------------
-  // G. USER'S PAPER STATUSES & SUBMISSIONS
+  // 9. USER'S PAPER STATUSES & SUBMISSIONS
   // -------------------------------------------------------------------------
   if (
     q.includes("my paper status") ||
@@ -1095,27 +1301,7 @@ To submit your first manuscript:
   }
 
   // -------------------------------------------------------------------------
-  // H. PAPER LIFECYCLE & STATUS DEFINITIONS
-  // -------------------------------------------------------------------------
-  if (
-    q.includes("under review") ||
-    q.includes("what does finalized mean") ||
-    q.includes("what does accepted mean") ||
-    q.includes("lifecycle") ||
-    q.includes("state machine") ||
-    q.includes("paper statuses")
-  ) {
-    return `### 🔄 Manuscript Lifecycle States in ConfHub
-
-1. **Submitted**: The initial manuscript draft has been safely received and stored. It is queued for reviewer allocation.
-2. **Under Review**: Assigned to peer reviewers who evaluate the work double-blind across 4 dimensions.
-3. **Accepted / Rejected**: Reviewers have completed scoring; the Program Chair has released the official decision.
-4. **Camera-Ready & Registered**: For accepted papers, the author uploads the unblinded camera-ready PDF and pays the registration fee.
-5. **Finalized**: Both camera-ready manuscript and registration payment are verified. The paper is automatically eligible for room/session scheduling!`;
-  }
-
-  // -------------------------------------------------------------------------
-  // I. SUBMISSION GUIDELINES & FORMATTING RULES
+  // 10. SUBMISSION GUIDELINES & FORMATTING RULES
   // -------------------------------------------------------------------------
   if (
     q.includes("how to submit") ||
@@ -1162,104 +1348,8 @@ Follow these 4 simple steps:
   }
 
   // -------------------------------------------------------------------------
-  // J. EDITING, REVISIONS & WITHDRAWALS
+  // 11. REGISTRATION FEES & FINALIZING
   // -------------------------------------------------------------------------
-  if (
-    q.includes("edit paper") ||
-    q.includes("update paper") ||
-    q.includes("revision") ||
-    q.includes("new version") ||
-    q.includes("v2") ||
-    q.includes("can i edit") ||
-    q.includes("modify submission")
-  ) {
-    return `### ✏️ Editing Submissions & Versioning
-
-**Yes, you can edit your submission before the deadline!**
-1. Open **Tab 2 (My Submissions)**.
-2. Click on your manuscript to view its details.
-3. Use the **Upload Revision** tool to submit an updated PDF or modify metadata.
-4. The system automatically preserves history and increments the version counter (**v1 → v2**).
-
-*Note: Once the conference submission deadline passes, editing is locked to ensure reviewers evaluate a stable version.*`;
-  }
-
-  if (q.includes("withdraw") || q.includes("cancel submission") || q.includes("delete paper")) {
-    return `### 🚫 Withdrawing a Manuscript
-
-• Authors can withdraw their submission prior to final acceptance by selecting **Withdraw** in **Tab 2 (My Submissions)**.
-• Withdrawing removes the paper from the active peer-review pool.
-• If you need to retract a paper after acceptance, please reach out to the conference Program Chair directly.`;
-  }
-
-  // -------------------------------------------------------------------------
-  // K. PEER REVIEW PROCESS & SCORING RUBRIC
-  // -------------------------------------------------------------------------
-  if (
-    q.includes("rubric") ||
-    q.includes("scoring") ||
-    q.includes("how are papers evaluated") ||
-    q.includes("criteria") ||
-    q.includes("score") ||
-    q.includes("review criteria")
-  ) {
-    return `### ⭐ ConfHub 4-Dimension Peer-Review Rubric
-
-Reviewers evaluate manuscripts on a standardized **1 to 5 numeric scale** (1: Poor, 2: Below Average, 3: Acceptable, 4: Good, 5: Outstanding):
-
-1. **Novelty & Originality (1–5)**:
-   Does the paper present unique concepts, algorithms, architectures, or empirical findings that push the boundary of the field?
-2. **Methodological Rigor (1–5)**:
-   Are the experimental designs, statistical tests, mathematical proofs, and baseline comparisons sound and reproducible?
-3. **Technical Quality (1–5)**:
-   Is the implementation solid? Are benchmarks realistic, and are limitations honestly acknowledged?
-4. **Relevance & Impact (1–5)**:
-   Does the submission align with the conference track and deliver meaningful value to the research community?
-
-**Recommendations**:
-Reviewers submit an overall recommendation (*Strong Accept, Accept, Weak Accept, Borderline, Weak Reject, Strong Reject*), accompanied by detailed constructive feedback for authors and confidential remarks for the Program Committee.`;
-  }
-
-  if (
-    q.includes("double blind") ||
-    q.includes("peer review") ||
-    q.includes("who reviews") ||
-    q.includes("can reviewers see") ||
-    q.includes("reviewer names")
-  ) {
-    return `### 🛡️ Double-Blind Peer Review Protocol
-
-ConfHub strictly enforces double-blind evaluation:
-• **Authors** do not see the names or affiliations of the reviewers evaluating their work.
-• **Reviewers** do not see author names, university affiliations, or email addresses.
-
-This guarantees unbiased evaluations based solely on scientific merit and technical quality. Review feedback is released to authors in **Tab 2 (My Submissions)** once the Program Committee finalizes decisions.`;
-  }
-
-  // -------------------------------------------------------------------------
-  // L. CAMERA-READY FINALIZATION & REGISTRATION FEES
-  // -------------------------------------------------------------------------
-  if (
-    q.includes("camera ready") ||
-    q.includes("camera-ready") ||
-    q.includes("how to finalize") ||
-    q.includes("finalizing paper")
-  ) {
-    return `### 🚀 Finalizing Accepted Manuscripts (Tab 3)
-
-For an accepted paper to transition to **Finalized**, authors must complete two independent requirements in **Tab 3 (Registration & Camera-Ready)**:
-
-1. **Upload Camera-Ready PDF**:
-   - Re-insert author names, affiliations, and final acknowledgments.
-   - Address reviewer feedback and formatting suggestions.
-   - Adhere strictly to the 10-page IEEE/ACM limit.
-2. **Complete Conference Registration**:
-   - Select your attendee tier (Student $150, Academic $300, Industry $500).
-   - Complete fee payment.
-
-Once **both** the camera-ready manuscript is uploaded and registration is paid, your paper status updates to **Finalized** and becomes eligible for program session scheduling!`;
-  }
-
   if (
     q.includes("fee") ||
     q.includes("fees") ||
@@ -1285,7 +1375,7 @@ Registration payments are processed directly in **Tab 3 (Registration & Camera-R
   }
 
   // -------------------------------------------------------------------------
-  // M. PROGRAM SCHEDULING & CONFLICT DETECTION
+  // 12. PROGRAM SCHEDULING & CONFLICT DETECTION
   // -------------------------------------------------------------------------
   if (
     q.includes("my schedule") ||
@@ -1352,7 +1442,7 @@ When an Organizer saves a session, ConfHub validates the timetable against all e
   }
 
   // -------------------------------------------------------------------------
-  // N. CERTIFICATES & PROCEEDINGS
+  // 13. CERTIFICATES
   // -------------------------------------------------------------------------
   if (
     q.includes("certificate") ||
@@ -1374,129 +1464,30 @@ When an Organizer saves a session, ConfHub validates the timetable against all e
 *(Example: For ACM Future Computing Conference FC 2025 whose end date has elapsed, certificate generation is immediately unlocked in Tab 5!)*`;
   }
 
-  if (q.includes("proceedings") || q.includes("publication") || q.includes("document library") || q.includes("patent")) {
-    return `### 📚 Conference Proceedings & Document Library
-
-• **Official Proceedings**: All finalized camera-ready papers are collated into the conference proceedings catalog.
-• **Document Library (Tab 5)**: Authors and attendees can view conference proceedings, download supplementary materials, and upload patent filings or research artifacts.`;
+  // -------------------------------------------------------------------------
+  // 14. DYNAMIC GENERAL KNOWLEDGE LOOKUP (WIKIPEDIA API FALLBACK)
+  // For open questions like "what is gravity", "who wrote Hamlet", "distance to moon", etc.
+  // -------------------------------------------------------------------------
+  const generalWikiResult = await fetchGeneralKnowledge(trimmed);
+  if (generalWikiResult) {
+    return generalWikiResult;
   }
 
   // -------------------------------------------------------------------------
-  // O. ROLES & PERMISSIONS
+  // 15. OPEN GENERAL-PURPOSE FALLBACK (NO REFUSAL / NO CONFERENCE REDIRECT)
   // -------------------------------------------------------------------------
-  if (
-    q.includes("role") ||
-    q.includes("roles") ||
-    q.includes("switch role") ||
-    q.includes("become a reviewer") ||
-    q.includes("become an organizer") ||
-    q.includes("user management")
-  ) {
-    return `### 👥 ConfHub Roles & Permissions
+  return `I understand you are asking about **"${trimmed}"**.
 
-ConfHub features three distinct user roles:
+While I don't have an immediate summary for that specific query in my local cache, I am your general-purpose AI assistant! You can ask me any question—whether it's about science, geography, coding, mathematics, or academic topics.
 
-1. **Author**:
-   - Submit research manuscripts (Tab 1)
-   - Track double-blind review feedback and versions (Tab 2)
-   - Upload camera-ready papers and pay registration (Tab 3)
-   - View assigned presentation timetable (Tab 4)
-   - Download post-conference certificates and proceedings (Tab 5)
+If you have a question about this Conference Management System (such as active conferences, paper submissions, review rubrics, registration, or scheduling), I can also answer that with complete platform detail.
 
-2. **Reviewer**:
-   - Access assigned double-blind manuscripts
-   - Score papers across 4 dimensions (Novelty, Methodology, Quality, Relevance)
-   - Provide author feedback and confidential notes to chairs
-
-3. **Organizer**:
-   - Create, edit, and publish conferences
-   - Monitor review progress and issue acceptance decisions
-   - Build program schedules with automated conflict detection
-   - Promote users to Reviewer or Organizer roles
-
-*You can test and navigate between roles using the role selector in the top navigation header!*`;
-  }
-
-  // -------------------------------------------------------------------------
-  // P. SCHOLARLY WRITING & REBUTTALS
-  // -------------------------------------------------------------------------
-  if (q.includes("abstract") || q.includes("writing an abstract") || q.includes("abstract structure")) {
-    return `### ✍️ Academic Writing: Structured Abstract Guide
-
-A compelling conference abstract should be **150–250 words** structured into 5 key sentences:
-1. **Background**: Contextualize the problem and current limitations.
-2. **Objective**: Clearly state what your work solves.
-3. **Proposed Method**: Summarize your algorithmic, theoretical, or empirical approach.
-4. **Key Results**: Provide concrete quantitative benchmarks (e.g. *"achieves 14% higher throughput with 22% lower latency"*).
-5. **Impact**: Highlight why this matters to the community.`;
-  }
-
-  if (q.includes("rebuttal") || q.includes("respond to reviewer") || q.includes("reviewer comments")) {
-    return `### 💡 Academic Writing: Author Rebuttal Best Practices
-
-When responding to peer-review feedback:
-1. **Express Gratitude**: Thank reviewers for their constructive time and critique.
-2. **Stay Objective**: Address factual concerns with data, benchmarks, or citations. Avoid defensive language.
-3. **Use Structured Numbering**:
-   - *[Reviewer 1 - Point 1]*: Quote the reviewer's concern.
-   - *[Author Response]*: Explain your clarification.
-   - *[Manuscript Update]*: Reference the exact page/section changed in your revision.`;
-  }
-
-  // -------------------------------------------------------------------------
-  // Q. TRACKS & TOPICS EXPLORATION
-  // -------------------------------------------------------------------------
-  if (q.includes("track") || q.includes("tracks") || q.includes("topic") || q.includes("topics")) {
-    const allTracks = publishedConferences.flatMap((c) => c.tracks || []);
-    const uniqueTracks = Array.from(new Set(allTracks));
-
-    return `### 🏷️ Active Conference Tracks & Topics
-
-ConfHub hosts research across diverse computer science and engineering disciplines:
-${uniqueTracks.map((t) => `• ${t}`).join("\n")}
-
-*Select any track when submitting your manuscript in **Tab 1 (Submit Paper)**.*`;
-  }
-
-  // -------------------------------------------------------------------------
-  // R. INTELLIGENT TOPIC & KEYWORD SEARCH ACROSS CONFERENCES
-  // -------------------------------------------------------------------------
-  const words = cleanQ.split(/\s+/).filter((w) => w.length > 3);
-  const topicMatches = publishedConferences.filter((c) => {
-    return words.some(
-      (w) =>
-        c.title.toLowerCase().includes(w) ||
-        c.description.toLowerCase().includes(w) ||
-        (c.tracks && c.tracks.some((t) => t.toLowerCase().includes(w)))
-    );
-  });
-
-  if (topicMatches.length > 0) {
-    const confList = topicMatches.map((c) => `• **${c.title}** (Deadline: ${formatDate(c.submission_deadline)})`).join("\n");
-    return `I found conferences related to your inquiry:
-
-${confList}
-
-Would you like to know more about the tracks, submission deadlines, or formatting guidelines for any of these events?`;
-  }
-
-  // -------------------------------------------------------------------------
-  // S. THOUGHTFUL CONTEXTUAL SCHOLARLY RESPONSE
-  // -------------------------------------------------------------------------
-  return `Thank you for your inquiry regarding **"${trimmed}"**.
-
-As your **ConfHub Academic Advisor**, I can assist you with:
-• **Academic Definitions & Acronyms**: Ask me about ML, AI, NLP, LLMs, IEEE, ACM, PQC, or peer review.
-• **Active Conferences**: Review deadlines and topics for upcoming events like IEEE GAISC 2026 and ICSS 2026.
-• **Paper Submissions**: Guidelines for 10-page IEEE/ACM two-column PDF manuscripts in Tab 1.
-• **Review Rubric**: The 4-dimension 1–5 scoring scale and double-blind evaluation rules.
-• **Presentation Timetables**: Room assignments and conflict detection in Program Scheduling.
-
-Would you like more details on any of these topics? You can also click any of the quick prompt chips below!`;
+How would you like to proceed?`;
 };
 
 /**
  * Main conversational dispatcher
+ * No keyword filtering or classifier blocks general questions before the API call.
  */
 export const askGeminiAssistant = async (
   userMessage,
@@ -1510,12 +1501,12 @@ export const askGeminiAssistant = async (
 
   const trimmed = userMessage.trim();
 
-  // Try Remote Gemini LLM first if configured
+  // Try Remote Gemini LLM first if configured (passes ANY question directly without restriction)
   if (isGeminiConfigured()) {
     try {
       const platformContext = getPlatformContext(currentUser, userProfile);
       const llmReply = await fetchGeminiResponse(trimmed, platformContext, chatHistory);
-      if (llmReply && llmReply.length > 10) {
+      if (llmReply && llmReply.length > 5) {
         return llmReply;
       }
     } catch (err) {
@@ -1523,6 +1514,6 @@ export const askGeminiAssistant = async (
     }
   }
 
-  // Built-in ConfHub Academic Knowledge & Reasoning Engine
-  return generateAcademicEngineResponse(trimmed, currentUser, userProfile);
+  // Built-in ConfHub Knowledge & Reasoning Engine
+  return await generateAcademicEngineResponse(trimmed, currentUser, userProfile);
 };

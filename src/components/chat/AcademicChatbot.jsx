@@ -19,16 +19,16 @@ import {
 } from "../../services/geminiService";
 import { useAuth } from "../../context/useAuth";
 
-// Quick suggestion chips for scholars
+// Quick suggestion chips
 const QUICK_PROMPTS = [
-  { label: "Active Conferences", query: "What are the active conferences?" },
-  { label: "My Submissions", query: "What is my paper status?" },
-  { label: "Presentation Schedule", query: "What is my presentation schedule?" },
-  { label: "Review Rubric", query: "What is the peer review rubric and scoring?" },
-  { label: "Formatting Rules", query: "What are the manuscript formatting guidelines?" },
-  { label: "Registration Fees", query: "What are the conference registration fees?" },
-  { label: "Conflict Detection", query: "How does conflict detection work in scheduling?" },
-  { label: "Certificates", query: "How can I download my certificate?" }
+  { label: "🌿 Explain Photosynthesis", query: "Explain photosynthesis" },
+  { label: "🗼 Capital of France", query: "What's the capital of France?" },
+  { label: "🧠 What is ML?", query: "What is machine learning?" },
+  { label: "🏛 Active Conferences", query: "What are the active conferences?" },
+  { label: "⭐ Review Process", query: "How does the review process work here?" },
+  { label: "📄 My Submissions", query: "What is my paper status?" },
+  { label: "💳 Registration Fees", query: "What are the conference registration fees?" },
+  { label: "📅 Presentation Schedule", query: "What is my presentation schedule?" }
 ];
 
 /**
@@ -136,18 +136,11 @@ export const AcademicChatbot = () => {
     {
       id: "welcome",
       sender: "ai",
-      text: `Greetings! I am your **ConfHub Academic Advisor**.
+      text: `Hello! I am your **ConfHub AI Assistant**.
 
-I can answer any questions regarding:
-• **Active Conferences & Deadlines**
-• **Manuscript Submissions & Formatting** (IEEE/ACM 10-page 2-column)
-• **Real-Time Paper Statuses & Reviews**
-• **Peer-Review Rubric & Scoring**
-• **Registration Fees & Finalizing**
-• **Program Timetable & Conflict Detection**
-• **Official Presentation Certificates**
+I can help with anything you'd like to ask—general knowledge, science, coding, history, or academic writing—as well as answer questions about ConfHub conferences, paper submissions, review rubrics, registration, and schedules.
 
-What would you like to inquire about today?`,
+Feel free to ask me anything!`,
       timestamp: new Date()
     }
   ]);
@@ -280,7 +273,7 @@ What would you like to inquire about today?`,
                 </div>
                 <div>
                   <h3 className="font-serif font-bold text-xs text-ink-950 tracking-wide flex items-center gap-1.5">
-                    ConfHub Academic Advisor
+                    ConfHub AI Assistant
                     <Sparkles className="w-3 h-3 text-terracotta-600" />
                   </h3>
                   <div className="flex items-center gap-1.5">
@@ -290,7 +283,7 @@ What would you like to inquire about today?`,
                       }`}
                     />
                     <p className="text-[9px] font-mono text-ink-600 uppercase tracking-tight">
-                      {hasApiKey ? "Gemini 1.5/2.0 Flash Connected" : "Academic Intelligence Engine"}
+                      {hasApiKey ? "Gemini 1.5/2.0 Flash Connected" : "General & Platform AI Engine"}
                     </p>
                   </div>
                 </div>
@@ -453,7 +446,7 @@ What would you like to inquire about today?`,
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask about conferences, reviews, guidelines, schedules..."
+                placeholder="Ask me anything (general knowledge, coding, or ConfHub)..."
                 className="flex-1 px-3 py-2 text-xs bg-white border border-beige-300 rounded-sm text-ink-900 placeholder:text-ink-400 focus:outline-none focus:border-ink-800"
               />
               <button
