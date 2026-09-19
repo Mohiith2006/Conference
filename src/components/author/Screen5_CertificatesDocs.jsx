@@ -294,7 +294,7 @@ export const Screen5_CertificatesDocs = () => {
               </strong>.
             </p>
             <div className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-              Tip: Select <strong>"ACM Future Computing Conference (FC 2025)"</strong> in the dropdown above to test the unlocked certificate for Dr. Sarah Chen!
+              Tip: Select <strong>"ACM Future Computing Conference (FC 2025)"</strong> in the dropdown above to test the unlocked certificate!
             </div>
           </div>
         ) : (

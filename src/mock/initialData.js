@@ -32,14 +32,6 @@ export const INITIAL_USERS = [
     role: "reviewer",
     affiliation: "ETH Zürich - Distributed Computing Lab",
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80"
-  },
-  {
-    uid: "user-author-01",
-    name: "Dr. Sarah Chen",
-    email: "author@confhub.org",
-    role: "author",
-    affiliation: "Carnegie Mellon University",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
   }
 ];
 

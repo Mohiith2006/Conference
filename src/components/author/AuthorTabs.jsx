@@ -169,7 +169,7 @@ export const AuthorTabs = ({ activeTab, setActiveTab }) => {
     const optimisticPaper = {
       id: generatedPaperId,
       conference_id: selectedConfId,
-      author_id: authorId || "user-author-01",
+      author_id: authorId || userProfile?.uid || "author-local",
       author_name: userProfile?.name || "Author",
       author_email: userProfile?.email || "",
       title: title.trim(),
@@ -192,7 +192,7 @@ export const AuthorTabs = ({ activeTab, setActiveTab }) => {
     const paperPayload = {
       id: generatedPaperId,
       conference_id: selectedConfId,
-      author_id: authorId || "user-author-01",
+      author_id: authorId || userProfile?.uid || "author-local",
       author_name: userProfile?.name || "Author",
       author_email: userProfile?.email || "",
       title: title.trim(),

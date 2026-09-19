@@ -48,39 +48,43 @@ export const DEMO_CREDENTIALS = [
     passwords: ["111111", "ConfHub2026!", "reviewer123", "password"],
     affiliation: "ETH Zürich - Distributed Computing Lab",
     avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80"
-  },
-  {
-    uid: "user-author-01",
-    name: "Dr. Sarah Chen",
-    email: "author@confhub.org",
-    role: "author",
-    passwords: ["111111", "ConfHub2026!", "author123", "password"],
-    affiliation: "Carnegie Mellon University",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
   }
 ];
 
+// Helper to purge any legacy mock author sessions so real users never see fake personas
+const purgeStaleMockSession = () => {
+  try {
+    const saved = localStorage.getItem("confhub_demo_user");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (
+        parsed?.uid === "user-author-google" ||
+        parsed?.uid === "user-author-01" ||
+        parsed?.name?.includes("(Google") ||
+        parsed?.name?.toLowerCase().includes("sarah chen") ||
+        parsed?.email?.includes("google@confhub") ||
+        parsed?.email === "author@confhub.org"
+      ) {
+        localStorage.removeItem("confhub_demo_user");
+        return null;
+      }
+      return parsed;
+    }
+  } catch {}
+  return null;
+};
+
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem("confhub_demo_user");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.uid) return { uid: parsed.uid, email: parsed.email, displayName: parsed.name };
-      }
-    } catch {}
+    const parsed = purgeStaleMockSession();
+    if (parsed?.uid) {
+      return { uid: parsed.uid, email: parsed.email, displayName: parsed.name };
+    }
     return null;
   });
 
   const [userProfile, setUserProfile] = useState(() => {
-    try {
-      const saved = localStorage.getItem("confhub_demo_user");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed?.uid) return parsed;
-      }
-    } catch {}
-    return null;
+    return purgeStaleMockSession();
   });
 
   const [loading, setLoading] = useState(false);
@@ -100,8 +104,10 @@ export const AuthProvider = ({ children }) => {
 
   // Real-time Firebase Auth listener
   useEffect(() => {
-    if (userProfile?.uid && userProfile.uid.startsWith("user-")) {
-      // Demo user already active from localStorage, no need to wait for Firebase
+    purgeStaleMockSession();
+
+    if (userProfile?.uid && userProfile.uid.startsWith("user-") && !userProfile.uid.includes("google") && userProfile.uid !== "user-author-01") {
+      // Valid organizer or reviewer demo user active from localStorage
       setLoading(false);
       return;
     }
@@ -295,90 +301,30 @@ export const AuthProvider = ({ children }) => {
     skipNextProfileSyncRef.current = true;
     try {
       if (!auth) {
-        // Fallback if auth SDK is offline
-        const offlineProfile = {
-          uid: "user-author-google",
-          name: "Dr. Sarah Chen (Google Auth)",
-          email: "author.google@confhub.org",
-          role: "author",
-          affiliation: "Carnegie Mellon University",
-          created_at: new Date().toISOString()
-        };
-        setCurrentUser({
-          uid: offlineProfile.uid,
-          email: offlineProfile.email,
-          displayName: offlineProfile.name
-        });
-        setUserProfile(offlineProfile);
-        localStorage.setItem("confhub_demo_user", JSON.stringify(offlineProfile));
-        return true;
+        setAuthError("Authentication service is not initialized. Please check network connection.");
+        return false;
       }
 
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: "select_account" });
 
-      let cred;
-      try {
-        cred = await signInWithPopup(auth, provider);
-      } catch (popupErr) {
-        console.warn("Google popup error code:", popupErr.code, popupErr.message);
-
-        // Handle deployed host not yet added to Firebase OAuth Authorized Domains
-        if (popupErr.code === "auth/unauthorized-domain") {
-          const currentHostname =
-            typeof window !== "undefined" && window.location.hostname
-              ? window.location.hostname
-              : "deployed domain";
-          
-          const googleFallbackProfile = {
-            uid: "user-author-google",
-            name: "Dr. Sarah Chen (Google Account)",
-            email: "author.google@confhub.org",
-            role: "author",
-            affiliation: "Carnegie Mellon University",
-            avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
-            created_at: new Date().toISOString()
-          };
-
-          setCurrentUser({
-            uid: googleFallbackProfile.uid,
-            email: googleFallbackProfile.email,
-            displayName: googleFallbackProfile.name
-          });
-          setUserProfile(googleFallbackProfile);
-          localStorage.setItem("confhub_demo_user", JSON.stringify(googleFallbackProfile));
-
-          setAuthError(
-            `Notice: '${currentHostname}' is not yet in Firebase Console > Authentication > Settings > Authorized domains. Signed you in as Author. To enable native Google OAuth popups on this domain, add '${currentHostname}' to Authorized domains in Firebase Console.`
-          );
-          return true;
-        }
-
-        if (popupErr.code === "auth/popup-blocked") {
-          setAuthError("Google sign-in popup was blocked by your browser. Please allow popups for this site or sign in with email.");
-          return false;
-        }
-
-        if (popupErr.code === "auth/popup-closed-by-user") {
-          return false;
-        }
-
-        throw popupErr;
-      }
-
-      const resolvedName = cred.user.displayName || cred.user.email?.split("@")[0] || "Academic Author";
+      const cred = await signInWithPopup(auth, provider);
+      const realUser = cred.user;
+      const resolvedName = realUser.displayName || realUser.email?.split("@")[0] || "Academic Author";
+      
       const profile = {
-        uid: cred.user.uid,
+        uid: realUser.uid,
         name: resolvedName,
-        email: cred.user.email,
+        email: realUser.email,
         role: "author",
         affiliation: "Academic Institution",
+        avatar: realUser.photoURL || null,
         created_at: new Date().toISOString()
       };
 
       if (db) {
         try {
-          const userDocRef = doc(db, "users", cred.user.uid);
+          const userDocRef = doc(db, "users", realUser.uid);
           const userSnap = await getDoc(userDocRef);
           if (userSnap.exists()) {
             const data = userSnap.data();
@@ -386,26 +332,63 @@ export const AuthProvider = ({ children }) => {
             profile.name = data.name || resolvedName;
             profile.affiliation = data.affiliation || "Academic Institution";
           } else {
-            setDoc(userDocRef, profile, { merge: true }).catch(() => {});
+            await setDoc(userDocRef, profile, { merge: true });
           }
         } catch (dbErr) {
-          console.warn("Firestore profile read warning during Google login:", dbErr);
+          console.warn("Firestore profile read/write warning during Google login:", dbErr);
         }
       }
 
       setCurrentUser({
-        uid: cred.user.uid,
-        email: cred.user.email,
-        displayName: profile.name
+        uid: realUser.uid,
+        email: realUser.email,
+        displayName: profile.name,
+        photoURL: realUser.photoURL
       });
       setUserProfile(profile);
       localStorage.setItem("confhub_demo_user", JSON.stringify(profile));
       return true;
-    } catch (err) {
-      console.error("Google sign in error:", err);
-      if (err.code !== "auth/popup-closed-by-user") {
-        setAuthError(err.message || "Failed to authenticate with Google.");
+    } catch (popupErr) {
+      console.warn("Google Sign-In caught error:", popupErr.code, popupErr.message);
+
+      // CRITICAL: NEVER log in as a fake persona on failure!
+      setCurrentUser(null);
+      setUserProfile(null);
+      localStorage.removeItem("confhub_demo_user");
+
+      if (popupErr.code === "auth/popup-closed-by-user") {
+        // User voluntarily closed popup; no error needed
+        return false;
       }
+
+      if (popupErr.code === "auth/unauthorized-domain") {
+        const currentHostname =
+          typeof window !== "undefined" && window.location.hostname
+            ? window.location.hostname
+            : "mohiith2006.github.io";
+
+        setAuthError(
+          `Domain authorization pending: In Firebase Console > Authentication > Settings > Authorized domains, ensure '${currentHostname}' (pure hostname, no 'https://' or slashes) is listed. Note: Firebase domain changes take 2–5 minutes to propagate across Google OAuth servers. Alternatively, you can use the 'Create Account' tab above to sign up immediately.`
+        );
+        return false;
+      }
+
+      if (popupErr.code === "auth/popup-blocked") {
+        setAuthError("Google Sign-In popup was blocked by your browser. Please allow popups for this site and try again.");
+        return false;
+      }
+
+      if (
+        popupErr.code === "auth/operation-not-allowed" ||
+        popupErr.code === "auth/configuration-not-found"
+      ) {
+        setAuthError(
+          "Google Sign-In provider is disabled in Firebase. Go to Firebase Console > Authentication > Sign-in method, click Google, ensure Enable is checked with a support email selected, and click Save."
+        );
+        return false;
+      }
+
+      setAuthError(popupErr.message || "Failed to authenticate with Google.");
       return false;
     } finally {
       skipNextProfileSyncRef.current = false;

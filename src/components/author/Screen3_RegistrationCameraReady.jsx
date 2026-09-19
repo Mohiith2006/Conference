@@ -141,10 +141,7 @@ export const Screen3_RegistrationCameraReady = ({ onNavigateToScreen }) => {
               How to test this screen:
             </div>
             <p className="text-slate-500">
-              1. You can switch to the <strong>Organizer</strong> role using the top bar and accept one of your papers on the Final Decision Dashboard.
-            </p>
-            <p className="text-slate-500">
-              2. Or click below to reset to the default demo data which includes an accepted paper for Dr. Sarah Chen.
+              1. You can sign in as an <strong>Organizer</strong> and accept one of your submitted papers on the Final Decision Dashboard.
             </p>
           </div>
         </div>

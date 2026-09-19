@@ -280,8 +280,16 @@ export const SplitPaneLogin = () => {
           {/* Error Banner */}
           {authError && (
             <div className="mb-4 p-3 bg-terracotta-50 border border-terracotta-100 text-terracotta-800 rounded-sm text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <div className="leading-snug">{authError}</div>
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-terracotta-600" />
+              <div className="leading-snug flex-1">{authError}</div>
+              <button
+                type="button"
+                onClick={() => setAuthError(null)}
+                className="text-terracotta-400 hover:text-terracotta-800 ml-1 text-base leading-none font-bold"
+                aria-label="Dismiss error"
+              >
+                &times;
+              </button>
             </div>
           )}
 

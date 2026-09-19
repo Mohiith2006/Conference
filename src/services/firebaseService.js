@@ -68,13 +68,22 @@ const saveStoredConferences = (data) => {
   } catch {}
 };
 
+const isInvalidOrMockPaper = (p) => {
+  if (!p || !p.id) return true;
+  if (p.id.startsWith("paper-chen-")) return true;
+  if (p.author_id === "user-author-01" || p.author_id === "user-author-google") return true;
+  if (p.author_name && p.author_name.toLowerCase().includes("sarah chen")) return true;
+  if (Array.isArray(p.authors) && p.authors.some((a) => a && a.toLowerCase && a.toLowerCase().includes("sarah chen"))) return true;
+  return false;
+};
+
 export const getStoredPapers = () => {
   try {
     const saved = localStorage.getItem("confhub_papers");
     if (!saved) return [];
     const parsed = JSON.parse(saved);
     if (!Array.isArray(parsed)) return [];
-    const filtered = parsed.filter((p) => p && p.id && !p.id.startsWith("paper-chen-"));
+    const filtered = parsed.filter((p) => !isInvalidOrMockPaper(p));
     if (filtered.length !== parsed.length) {
       localStorage.setItem("confhub_papers", JSON.stringify(filtered));
     }
@@ -86,7 +95,7 @@ export const getStoredPapers = () => {
 
 export const saveStoredPapers = (data) => {
   try {
-    const clean = Array.isArray(data) ? data.filter((p) => p && p.id && !p.id.startsWith("paper-chen-")) : [];
+    const clean = Array.isArray(data) ? data.filter((p) => !isInvalidOrMockPaper(p)) : [];
     localStorage.setItem("confhub_papers", JSON.stringify(clean));
     dispatchPapersChanged(clean);
   } catch {}
@@ -97,18 +106,16 @@ export const mergeWithLocalPapers = (firestoreDocs) => {
   const map = new Map();
   // Preserve local papers
   local.forEach((p) => {
-    if (p && p.id) map.set(p.id, p);
+    if (p && p.id && !isInvalidOrMockPaper(p)) map.set(p.id, p);
   });
   // Merge firestore papers
   (firestoreDocs || []).forEach((p) => {
-    if (p && p.id) {
+    if (p && p.id && !isInvalidOrMockPaper(p)) {
       const existing = map.get(p.id);
       map.set(p.id, { ...(existing || {}), ...p });
     }
   });
-  const merged = Array.from(map.values()).filter(
-    (p) => p && p.id && !p.id.startsWith("paper-chen-")
-  );
+  const merged = Array.from(map.values()).filter((p) => !isInvalidOrMockPaper(p));
   try {
     localStorage.setItem("confhub_papers", JSON.stringify(merged));
     dispatchPapersChanged(merged);
@@ -324,9 +331,8 @@ export const deleteConference = async (confId) => {
 // ==========================================
 export const subscribeAuthorPapers = (authorId, callback) => {
   const getAuthorPapers = () => {
-    return getStoredPapers().filter(
-      (p) => !authorId || p.author_id === authorId || authorId === "user-author-01"
-    );
+    if (!authorId) return [];
+    return getStoredPapers().filter((p) => p.author_id === authorId);
   };
 
   // Synchronously invoke callback immediately with stored papers
@@ -523,9 +529,9 @@ export const submitPaper = async ({
   const paperDoc = {
     id: paperId,
     conference_id: conference_id || "conf-gaisc-2026",
-    author_id: author_id || "user-author-01",
-    author_name: author_name || "Academic Author",
-    author_email: author_email || "",
+    author_id: author_id || auth?.currentUser?.uid || "author-local",
+    author_name: author_name || auth?.currentUser?.displayName || "Academic Author",
+    author_email: author_email || auth?.currentUser?.email || "",
     title: title || "Submitted Research Manuscript",
     abstract: abstract || "",
     track: track || "General Track",
